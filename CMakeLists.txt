@@ -27,37 +27,94 @@ string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
 hunter_add_package(GTest)
 find_package(GTest CONFIG REQUIRED)
+hunter_add_package(Boost COMPONENTS)
+find_package(Boost CONFIG REQUIRED)
+# TODO: change template word to project name and delete this comment
+add_library(
+  ${PROJECT_NAME}
+  STATIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/sources/Json.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/sources/JsonParser.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/sources/Utils.cpp
+)
 
-# TODO: change template word to project name and delete this comment
-add_library(template STATIC
-  # enum your files and delete this comment
-  ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
+add_executable(
+  tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/TestJson.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/TestJsonObject.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/TestJsonArray.cpp
 )
-add_executable(tests
-  # TODO: enum your files and delete this comment
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${BOOST_ROOT}/include
 )
 
-# TODO: change template word to project name and delete this comment
-target_include_directories(template 
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+  tests
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${GTEST_ROOT}/include
 )
-target_include_directories(tests 
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+find_library(
+  GTEST_LOCAL_LIB
+  NAMES gtest
+  PATHS ${PROJECT_NAME}/lib64/
 )
-# TODO: change template word to project name and delete this comment
-target_link_libraries(tests GTest::main template)
+find_library(
+  GTEST_LOCAL_LIB_MAIN
+  NAMES gtest_main
+  PATHS ${PROJECT_NAME}/lib64/
+)
+target_link_libraries(
+  tests
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${GTEST_LOCAL_LIB}
+  ${GTEST_LOCAL_LIB_MAIN}
+  ${PROJECT_NAME}
+)
 
 enable_testing()
-add_test(NAME unit_tests COMMAND tests) 
+add_test(NAME unit_tests COMMAND tests)
 
-if(BUILD_COVERAGE)
+if (BUILD_DEMO)
+  set(DEMO_NAME ${PROJECT_NAME}Demo)
+  add_executable(
+    ${DEMO_NAME}
+    ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
+  )
+
+  target_include_directories(
+    ${DEMO_NAME}
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+  target_link_libraries(${DEMO_NAME} ${PROJECT_NAME})
+endif ()
+
+if (BUILD_BROKER)
+  hunter_add_package(nlohmann_json)
+  find_package(nlohmann_json CONFIG REQUIRED)
+
+  set(BROKER_NAME ${PROJECT_NAME}Broker)
+  add_executable(
+    ${BROKER_NAME}
+    ${CMAKE_CURRENT_SOURCE_DIR}/broker/main.cpp
+  )
+
+  target_include_directories(
+    ${BROKER_NAME}
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+  target_link_libraries(${BROKER_NAME} ${PROJECT_NAME} nlohmann_json::nlohmann_json)
+endif ()
+
+if (BUILD_COVERAGE)
   set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
   find_package(codecov)
-  # TODO: change template word to project name and delete this comment
-  add_coverage(template)
+  add_coverage(${PROJECT_NAME})
   add_coverage(tests)
   list(APPEND LCOV_REMOVE_PATTERNS "'${PROJECT_SOURCE_DIR}/tests/*'")
   coverage_evaluate()
-endif()
+endif ()
