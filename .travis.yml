@@ -16,12 +16,12 @@ jobs:
   - name: "quality"
     script:
     - docker run --env-file .env -v `pwd`:`pwd` -w `pwd` -t rusdevops/bootstrap-cpp scripts/coverage.sh
-   - name: "duplicate"
-     script:
-     - docker run --env-file .env -v `pwd`:`pwd` -w `pwd` -t rusdevops/bootstrap-cpp scripts/duplication.sh
-   - name: "gen"
-     script:
-     - ./scripts/genenv.sh
+  - name: "duplicate"
+    script:
+    - docker run --env-file .env -v `pwd`:`pwd` -w `pwd` -t rusdevops/bootstrap-cpp scripts/duplication.sh
+  - name: "gen"
+    script:
+    - ./scripts/genenv.sh
 
 notifications:
     email: false
